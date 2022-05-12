@@ -29,6 +29,7 @@ var noMoreOperands = errors.New("no more operands")
 // Use the errors defined above as described, again wrapping into fmt.Errorf
 
 func StringSum(input string) (output string, err error) {
+	fmt.Println("input:", input)
 	input = strings.TrimSpace(input)
 	if len(input) == 0 {
 		return "", fmt.Errorf("empty input: %w", errorEmptyInput)
