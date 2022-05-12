@@ -82,6 +82,7 @@ func getOperand(runes []rune, start int) (operand, error) {
 				return operand{}, fmt.Errorf("multiple operators")
 			}
 			result.hasSign = true
+			continue
 		}
 		if r == '-' {
 			if result.hasSign {
@@ -89,6 +90,7 @@ func getOperand(runes []rune, start int) (operand, error) {
 			}
 			result.hasSign = true
 			negative = true
+			continue
 		}
 		if unicode.IsDigit(r) {
 			result.posStart = i
@@ -104,6 +106,10 @@ func getOperand(runes []rune, start int) (operand, error) {
 			result.posEnd = result.posStart + len(valRunes)
 			return result, nil
 		}
+		if unicode.IsSpace(r) {
+			continue
+		}
+		return operand{}, fmt.Errorf("bad symbol %c", r)
 	}
 
 	return operand{}, noMoreOperands
