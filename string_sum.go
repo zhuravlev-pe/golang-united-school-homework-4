@@ -29,7 +29,7 @@ var noMoreOperands = errors.New("no more operands")
 // Use the errors defined above as described, again wrapping into fmt.Errorf
 
 func StringSum(input string) (output string, err error) {
-	fmt.Printf("input: %q\n", input)
+	//fmt.Printf("input: %q\n", input)
 	input = strings.TrimSpace(input)
 	if len(input) == 0 {
 		return "", fmt.Errorf("empty input: %w", errorEmptyInput)
@@ -66,63 +66,62 @@ func StringSum(input string) (output string, err error) {
 }
 
 type operand struct {
-	value    int
-	hasSign  bool
-	posStart int
-	posEnd   int
+	value   int
+	hasSign bool
+	posEnd  int
 }
 
 func getOperand(runes []rune, start int) (operand, error) {
 	var result operand
 	var negative bool
 
-	for i := start; i < len(runes); i++ {
-		r := runes[i]
-		if r == '+' {
-			if result.hasSign {
-				return operand{}, fmt.Errorf("multiple operators")
-			}
-			result.hasSign = true
-			continue
-		}
-		if r == '-' {
-			if result.hasSign {
-				return operand{}, fmt.Errorf("multiple operators")
-			}
-			result.hasSign = true
-			negative = true
-			continue
-		}
-		if unicode.IsDigit(r) {
-			result.posStart = i
-			valRunes := getValueRunes(runes, i)
-			value, err := strconv.Atoi(string(valRunes))
-			if err != nil {
-				return operand{}, fmt.Errorf("bad operand value: %w", err)
-			}
-			result.value = value
-			if negative {
-				result.value = -result.value
-			}
-			result.posEnd = result.posStart + len(valRunes)
-			return result, nil
-		}
-		if unicode.IsSpace(r) {
-			continue
-		}
-		return operand{}, fmt.Errorf("bad symbol %c", r)
+	pos := getNextNonSpace(runes, start)
+	if pos < 0 {
+		return operand{}, noMoreOperands
 	}
 
-	return operand{}, noMoreOperands
+	if r := runes[pos]; r == '+' {
+		result.hasSign = true
+		pos += 1
+	} else if r == '-' {
+		result.hasSign = true
+		negative = true
+		pos += 1
+	}
+
+	result.posEnd = findOperandEnd(runes, pos)
+
+	opStr := string(runes[pos:result.posEnd])
+	opStr = strings.TrimSpace(opStr)
+
+	value, err := strconv.Atoi(opStr)
+	if err != nil {
+		return operand{}, fmt.Errorf("bad operand %q: %w", opStr, err)
+	}
+	if negative {
+		value = -value
+	}
+	result.value = value
+	return result, nil
 }
 
-func getValueRunes(runes []rune, start int) []rune {
-	i := start + 1
-	for ; i < len(runes); i++ {
-		r := runes[i]
-		if !unicode.IsDigit(r) {
-			break
+// getNextNonSpace returns the position of the next non-whitespace rune or -1 if the end of slice is reached
+func getNextNonSpace(runes []rune, start int) int {
+	for i := start; i < len(runes); i++ {
+		if !unicode.IsSpace(runes[i]) {
+			return i
 		}
 	}
-	return runes[start:i]
+	return -1
+}
+
+// findOperandEnd returns the position of the first symbol of the next operand or len(runes)
+func findOperandEnd(runes []rune, start int) int {
+	for i := start; i < len(runes); i++ {
+		switch runes[i] {
+		case '+', '-':
+			return i
+		}
+	}
+	return len(runes)
 }

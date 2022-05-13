@@ -22,6 +22,9 @@ func TestStringSum(t *testing.T) {
 				t.Error("error expected")
 				return
 			}
+			if !datum.hasError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			if datum.result != result {
 				t.Errorf("invalid result. got: %q want: %q", result, datum.result)
 			}
